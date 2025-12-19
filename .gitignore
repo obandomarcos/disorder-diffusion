@@ -1,0 +1,14 @@
+results/*
+*.out
+*.log
+*.tmp
+*.bak
+*.dat
+*.csv
+*.png
+*.jpg
+*.pdf
+*.aux
+*.log
+*.toc
+*.gz
