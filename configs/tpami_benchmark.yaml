@@ -1,0 +1,370 @@
+[paste YAML above]
+# DA-DPS TPAMI Benchmark Configuration
+# Comprehensive configuration for benchmarking Disorder-Averaged Diffusion Posterior Sampling
+# against standard DPS and other baselines on imaging inverse problems
+
+experiment:
+  name: "DA-DPS TPAMI Benchmark"
+  description: "Complete benchmarking suite for disorder-averaged diffusion posterior sampling"
+  author: "Research Team"
+  date: "2024"
+  version: "1.0"
+
+# ============================================================================
+# DISORDER CONFIGURATION
+# ============================================================================
+disorder:
+  # Distribution type: 'uniform', 'normal', 'lognormal'
+  distribution_type: 'uniform'
+  
+  # Uniform distribution parameters
+  uniform:
+    low: 0.8
+    high: 1.2
+  
+  # Normal distribution parameters
+  normal:
+    mean: 1.0
+    std: 0.1
+  
+  # Lognormal distribution parameters
+  lognormal:
+    mu: 0.0
+    sigma: 0.2
+  
+  # Number of disorder samples in ensemble
+  n_disorder: [1, 5, 10, 20]  # Test with different ensemble sizes
+  
+  # Validation thresholds
+  validation:
+    min_value: 1e-10
+    max_value: 1e6
+    max_variance: 100.0
+
+# ============================================================================
+# DIFFUSION MODEL CONFIGURATION
+# ============================================================================
+diffusion:
+  # Number of diffusion timesteps
+  num_train_timesteps: 1000
+  
+  # Noise schedule: 'linear', 'quadratic', 'cosine'
+  schedule: 'linear'
+  
+  # Inference configuration
+  inference:
+    num_steps: [50, 100, 250]  # Test different step counts
+    guidance_scale: [0.0, 0.5, 1.0, 2.0, 5.0]  # Range of guidance strengths
+    seed: 42
+
+# ============================================================================
+# SCORE NETWORK CONFIGURATION
+# ============================================================================
+score_network:
+  architecture: 'simple_unet'  # 'simple_unet', 'resnet', 'vit'
+  
+  # Input/output dimensions
+  in_channels: 1
+  out_channels: 1
+  
+  # Architecture parameters
+  hidden_dim: 128
+  n_layers: 3
+  
+  # Regularization
+  max_norm: 1e6
+  dropout_rate: 0.0
+  
+  # Training (if applicable)
+  learning_rate: 1e-4
+  weight_decay: 1e-5
+
+# ============================================================================
+# MEASUREMENT OPERATOR CONFIGURATION
+# ============================================================================
+measurement:
+  # Operator type: 'gaussian_cs', 'blur', 'inpainting', 'super_resolution'
+  operators:
+    - type: 'gaussian_cs'
+      description: 'Compressed sensing with Gaussian measurements'
+      compression_ratios: [0.1, 0.25, 0.5]  # m/n ratios
+      normalize: true
+    
+    - type: 'blur'
+      description: 'Gaussian blur'
+      kernel_size: 5
+      sigma: 1.5
+    
+    - type: 'inpainting'
+      description: 'Image inpainting with missing region'
+      mask_type: 'center_square'  # 'center_square', 'random', 'stripe'
+      missing_fraction: [0.3, 0.5, 0.7]
+    
+    - type: 'super_resolution'
+      description: 'Super-resolution (downsampling)'
+      downsampling_factor: [2, 4, 8]
+
+# ============================================================================
+# DATASET CONFIGURATION
+# ============================================================================
+dataset:
+  # Available: 'synthetic', 'ffhq', 'celeba', 'imagenet_subset', 'bsd68'
+  name: 'synthetic'
+  
+  synthetic:
+    n_samples: 100
+    image_size: 32
+    channels: 1
+  
+  ffhq:
+    path: 'datasets/ffhq'
+    n_samples: 100
+    image_size: 64
+  
+  celeba:
+    path: 'datasets/celeba'
+    n_samples: 100
+    image_size: 64
+  
+  imagenet_subset:
+    path: 'datasets/imagenet'
+    n_samples: 100
+    image_size: 64
+  
+  # Preprocessing
+  preprocessing:
+    normalize: true
+    normalization_type: 'zero_one'  # 'zero_one' or 'minus_one_one'
+    interpolation: 'bilinear'
+
+# ============================================================================
+# NOISE CONFIGURATION
+# ============================================================================
+noise:
+  # Measurement noise
+  measurement:
+    type: 'gaussian'
+    std: 0.01
+    snr_db: [20, 30, 40]  # Signal-to-noise ratio in dB
+  
+  # Prior noise (diffusion)
+  prior:
+    type: 'gaussian'
+    schedule: 'linear'
+
+# ============================================================================
+# SAMPLING CONFIGURATION
+# ============================================================================
+sampling:
+  # Number of samples to generate per image
+  n_samples_per_image: 1
+  
+  # Batch processing
+  batch_size: 1
+  
+  # Sampling methods to compare
+  methods:
+    - name: 'DPS'
+      description: 'Standard Diffusion Posterior Sampling'
+      config:
+        guidance_scale: 1.0
+        n_disorder: 1
+    
+    - name: 'DA-DPS'
+      description: 'Disorder-Averaged Diffusion Posterior Sampling'
+      config:
+        guidance_scale: 1.0
+        n_disorder: 10
+    
+    - name: 'DA-DPS-Weighted'
+      description: 'Weighted Disorder-Averaged DPS'
+      config:
+        guidance_scale: 1.0
+        n_disorder: 10
+        weighting: 'confidence'
+
+# ============================================================================
+# EVALUATION METRICS CONFIGURATION
+# ============================================================================
+evaluation:
+  # Reconstruction metrics
+  reconstruction:
+    - psnr
+    - ssim
+    - mse
+    - mae
+    - lpips  # Learned Perceptual Image Patch Similarity
+  
+  # Measurement fidelity
+  fidelity:
+    - measurement_error
+    - relative_error
+  
+  # Uncertainty quantification
+  uncertainty:
+    - posterior_std
+    - credible_interval_coverage
+  
+  # Computational metrics
+  computational:
+    - inference_time
+    - memory_usage
+    - gpu_memory_peak
+
+# ============================================================================
+# EXPERIMENT MATRIX
+# ============================================================================
+experiments:
+  # CS (Compressed Sensing) - Varying compression ratio
+  cs_varying_ratio:
+    operator: 'gaussian_cs'
+    compression_ratios: [0.1, 0.25, 0.5]
+    n_disorder: [1, 5, 10, 20]
+    n_samples: 50
+    guidance_scale: 1.0
+  
+  # CS - Varying noise
+  cs_varying_noise:
+    operator: 'gaussian_cs'
+    compression_ratio: 0.25
+    snr_db: [20, 30, 40, 50]
+    n_disorder: [1, 5, 10]
+    n_samples: 50
+  
+  # Inpainting - Varying missing fraction
+  inpainting_varying_missing:
+    operator: 'inpainting'
+    missing_fractions: [0.3, 0.5, 0.7]
+    n_disorder: [1, 5, 10, 20]
+    n_samples: 50
+    guidance_scale: 1.0
+  
+  # Super-resolution
+  super_resolution:
+    operator: 'super_resolution'
+    downsampling_factors: [2, 4, 8]
+    n_disorder: [1, 5, 10]
+    n_samples: 50
+    guidance_scale: 1.0
+  
+  # Blur deblurring
+  blur_deblurring:
+    operator: 'blur'
+    kernel_sizes: [3, 5, 7]
+    n_disorder: [1, 5, 10]
+    n_samples: 50
+    guidance_scale: 1.0
+  
+  # Guidance scale sweep
+  guidance_scale_sweep:
+    operator: 'gaussian_cs'
+    compression_ratio: 0.25
+    guidance_scales: [0.0, 0.5, 1.0, 2.0, 5.0, 10.0]
+    n_disorder: 10
+    n_samples: 50
+  
+  # Ensemble size effect
+  ensemble_size_effect:
+    operator: 'gaussian_cs'
+    compression_ratio: 0.25
+    n_disorder: [1, 2, 5, 10, 20, 50]
+    guidance_scale: 1.0
+    n_samples: 50
+
+# ============================================================================
+# COMPUTATION CONFIGURATION
+# ============================================================================
+computation:
+  # Device settings
+  device: 'cuda'  # 'cuda' or 'cpu'
+  gpu_id: 0
+  
+  # Precision
+  dtype: 'float32'  # 'float32' or 'float64'
+  
+  # Parallelization
+  num_workers: 4
+  pin_memory: true
+  
+  # Memory optimization
+  gradient_checkpointing: false
+  mixed_precision: false
+
+# ============================================================================
+# LOGGING AND SAVING CONFIGURATION
+# ============================================================================
+logging:
+  # Log level: 'DEBUG', 'INFO', 'WARNING', 'ERROR'
+  level: 'INFO'
+  
+  # Log directory
+  log_dir: 'logs/'
+  
+  # TensorBoard logging
+  tensorboard:
+    enabled: true
+    log_dir: 'logs/tensorboard/'
+  
+  # Wandb logging
+  wandb:
+    enabled: false
+    project: 'da-dps-benchmark'
+    entity: 'your-entity'
+
+# ============================================================================
+# SAVING CONFIGURATION
+# ============================================================================
+saving:
+  # Results directory
+  results_dir: 'results/'
+  
+  # Save predictions
+  save_predictions: true
+  
+  # Save metrics
+  save_metrics: true
+  
+  # Save configs
+  save_config: true
+  
+  # Save visualizations
+  save_visualizations: true
+  visualization:
+    formats: ['png', 'pdf']
+    dpi: 150
+
+# ============================================================================
+# REPRODUCIBILITY
+# ============================================================================
+reproducibility:
+  seed: 42
+  deterministic: true
+  benchmark: true  # Use deterministic algorithms
+
+# ============================================================================
+# HYPERPARAMETER OPTIMIZATION (Optional)
+# ============================================================================
+optimization:
+  enabled: false
+  method: 'bayesian'  # 'grid', 'random', 'bayesian'
+  
+  # Search space
+  search_space:
+    guidance_scale:
+      type: 'float'
+      min: 0.0
+      max: 10.0
+    
+    n_disorder:
+      type: 'int'
+      min: 1
+      max: 50
+    
+    num_steps:
+      type: 'int'
+      min: 10
+      max: 500
+  
+  # Optimization settings
+  n_trials: 50
+  n_jobs: 1

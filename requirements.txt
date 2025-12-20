@@ -1,113 +1,48 @@
-# Requirements file for pip-only installation (alternative to conda)
-# Usage: pip install -r requirements.txt
-#
-# For conda users: Use environment.yml instead
-# For pip-only users: Use this file
-#
-# GPU support: torch and torchvision include CUDA 12.1 by default
-# For CPU-only: Replace torch lines with:
-#   torch==2.1.2+cpu
-#   torchvision==0.16.2+cpu
-#   See: https://pytorch.org/get-started/locally/
-
 # Core Deep Learning
-torch==2.1.2
-torchvision==0.16.2
-torchaudio==2.1.2
-pytorch-lightning==2.1.3
-torchmetrics==1.3.0
-
-# Diffusion Models
-diffusers==0.30.2
-transformers==4.44.2
-accelerate>=0.27.0
-controlnet-aux>=0.0.7
+torch>=2.0.0
+torchvision>=0.15.0
+torchaudio>=2.0.0
 
 # Scientific Computing
 numpy>=1.24.0
-scipy>=1.12.0
-scikit-learn>=1.4.0
-scikit-image>=0.23.0
-pandas>=2.0.0
-sympy>=1.12
-numba>=0.59.0
+scipy>=1.10.0
 
-# Bayesian Methods
-pymc>=5.10.0
-arviz>=0.17.0
-pyro-ppl>=1.8.5
-bayesian-torch>=0.0.3
-blitz-bayesian-pytorch>=0.3.1
-jax>=0.4.20
-jaxlib>=0.4.20
-optax>=0.1.7
+# Diffusion & Sampling
+diffusers>=0.25.0
+transformers>=4.35.0
 
-# Signal Processing & Imaging
-pywt>=1.5.0
-nibabel>=5.1.0
-imageio>=2.34.0
-pillow>=10.1.0
+# Dataset Management (for FFHQ, ImageNet)
+datasets>=2.14.0
+huggingface_hub>=0.19.0
+huggingface_hub[cli]>=0.19.0
+
+# Image Processing
+Pillow>=10.0.0
+scikit-image>=0.21.0
 opencv-python>=4.8.0
-albumentations>=1.3.1
-scikit-sparse>=0.4.12
 
-# Optimization
-cvxpy>=1.4.0
-cvxopt>=1.3.0
-autograd>=1.13
-scikit-optimize>=0.9.0
-optuna>=3.0.0
-hyperopt>=0.2.7
+# Metrics & Evaluation
+scikit-learn>=1.3.0
+lpips>=0.1.4  # LPIPS metric
 
-# Visualization
-matplotlib>=3.8.0
-seaborn>=0.13.0
-plotly>=5.18.0
-plotly-orca>=1.3.1
-kaleido>=0.2.1
-tensorboard>=2.15.0
-wandb>=0.16.1
+# Utilities
+pyyaml>=6.0
+tqdm>=4.66.0
+tensorboard>=2.14.0
+wandb>=0.15.0  # For experiment tracking
 
-# Development & Utilities
-jupyter>=1.0.0
-jupyterlab>=4.1.0
-ipython>=8.20.0
-ipykernel>=6.28.0
-ipywidgets>=8.1.1
-black>=23.12.0
-flake8>=6.1.0
-pylint>=3.0.0
-mypy>=1.7.0
+# Development
 pytest>=7.4.0
 pytest-cov>=4.1.0
-pytest-benchmark>=4.0.0
-coverage>=7.4.0
+black>=23.9.0
+isort>=5.12.0
+mypy>=1.5.0
+flake8>=6.1.0
 
 # Documentation
 sphinx>=7.2.0
-sphinx-rtd-theme>=2.0.0
-sphinx-autodoc-typehints>=1.25.0
-sphinx-gallery>=0.14.0
+sphinx-rtd-theme>=1.3.0
 
-# Data Management
-h5py>=3.10.0
-zarr>=2.16.0
-polars>=0.20.0
-pyarrow>=14.0.0
-dask>=2024.1.0
-distributed>=2024.1.0
-xarray>=2023.12.0
-netcdf4>=1.6.4
-
-# Utilities
-tqdm>=4.66.0
-rich>=13.7.0
-click>=8.1.0
-pydantic>=2.5.0
-pydantic-settings>=2.1.0
-hydra-core>=1.3.0
-omegaconf>=2.3.0
-ruamel.yaml>=0.18.0
-gitpython>=3.1.41
-more-itertools>=10.1.0
-dill>=
+# Reproducibility
+pytz>=2023.3
+python-dateutil>=2.8.2
