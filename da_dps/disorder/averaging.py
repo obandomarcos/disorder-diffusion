@@ -5,105 +5,117 @@ import torch.nn as nn
 import torch.nn.functional as F
 from typing import Optional
 
+import torch
+from typing import List, Optional
+import warnings
 
-class ScoreNetwork(nn.Module):
-    """Score/noise prediction network with stability checks."""
+
+class DisorderAveragingEMA:
+    """Effective Medium Approximation for disorder averaging."""
     
-    def __init__(self, in_channels: int = 1, hidden_dim: int = 128,
-                 n_layers: int = 3, max_norm: float = 1e6):
+    def __init__(self, reduction: str = 'mean'):
         """
-        Initialize score network.
+        Initialize EMA averaging.
         
         Args:
-            in_channels: Number of input channels
-            hidden_dim: Hidden dimension size
-            n_layers: Number of conv layers
-            max_norm: Maximum allowed gradient norm
+            reduction: 'mean' for simple mean, 'weighted' for weighted averaging
         """
-        super().__init__()
-        self.in_channels = in_channels
-        self.hidden_dim = hidden_dim
-        self.max_norm = max_norm
-        
-        # Build convolutional layers
-        layers = []
-        in_ch = in_channels
-        for i in range(n_layers - 1):
-            layers.append(nn.Conv2d(in_ch, hidden_dim, kernel_size=3, padding=1))
-            layers.append(nn.ReLU())
-            in_ch = hidden_dim
-        
-        # Output layer
-        layers.append(nn.Conv2d(in_ch, in_channels, kernel_size=3, padding=1))
-        
-        self.net = nn.Sequential(*layers)
+        if reduction not in ['mean', 'weighted']:
+            raise ValueError(f"Unknown reduction: {reduction}")
+        self.reduction = reduction
     
-    def forward(self, x: torch.Tensor, t: Optional[torch.Tensor] = None) -> torch.Tensor:
+    def average(self, values: List[torch.Tensor],
+                weights: Optional[torch.Tensor] = None) -> torch.Tensor:
         """
-        Compute score with stability checks.
+        Average values over disorder ensemble.
         
         Args:
-            x: Input sample
-            t: Timestep (currently unused, for API compatibility)
+            values: List of tensors from disorder samples
+            weights: Optional weights for weighted averaging
             
         Returns:
-            torch.Tensor: Score estimate
+            torch.Tensor: Averaged value
         """
-        score = self.net(x)
+        if len(values) == 0:
+            raise ValueError("Cannot average empty list")
         
-        # Check for numerical issues
-        if torch.isnan(score).any():
-            raise RuntimeError("Score computation produced NaN")
-        if torch.isinf(score).any():
-            raise RuntimeError("Score computation produced Inf")
+        if self.reduction == 'mean':
+            return torch.stack(values).mean(dim=0)
         
-        return score
+        elif self.reduction == 'weighted':
+            if weights is None:
+                raise ValueError("Weights required for weighted averaging")
+            
+            stacked = torch.stack(values)  # (n_disorder, *shape)
+            
+            # Reshape weights to match stacked tensor dimensions
+            while weights.dim() < stacked.dim():
+                weights = weights.unsqueeze(-1)
+            
+            # Ensure weights are on same device
+            weights = weights.to(stacked.device)
+            
+            # Compute weighted average
+            weighted_sum = (stacked * weights).sum(dim=0)
+            weight_sum = weights.sum()
+            
+            if weight_sum == 0:
+                warnings.warn("Sum of weights is zero, falling back to mean")
+                return stacked.mean(dim=0)
+            
+            return weighted_sum / weight_sum
+        
+        else:
+            raise ValueError(f"Unknown reduction: {self.reduction}")
     
-    def compute_with_stability_check(self, x: torch.Tensor,
-                                     t: Optional[torch.Tensor] = None) -> torch.Tensor:
+    def average_with_confidence(
+        self,
+        values: List[torch.Tensor]
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         """
-        Compute score with gradient clipping.
+        Average values and compute confidence (std).
         
         Args:
-            x: Input sample
-            t: Timestep
+            values: List of tensors from disorder samples
             
         Returns:
-            torch.Tensor: Clipped score
+            Tuple of (averaged_value, standard_deviation)
         """
-        score = self.forward(x, t)
-        
-        # Clip to prevent explosion
-        score = torch.clamp(score, -self.max_norm, self.max_norm)
-        
-        return score
+        stacked = torch.stack(values)  # (n_disorder, *shape)
+        mean = stacked.mean(dim=0)
+        std = stacked.std(dim=0)
+        return mean, std
+
+
+class DisorderWeightingScheme:
+    """Different weighting schemes for disorder averaging."""
     
-    def compute_with_grad_norm_check(self, x: torch.Tensor,
-                                     t: Optional[torch.Tensor] = None) -> torch.Tensor:
+    @staticmethod
+    def uniform_weights(n_disorder: int, device: str = 'cpu') -> torch.Tensor:
+        """Create uniform weights."""
+        return torch.ones(n_disorder, device=device) / n_disorder
+    
+    @staticmethod
+    def confidence_weights(
+        values: List[torch.Tensor],
+        temperature: float = 1.0
+    ) -> torch.Tensor:
         """
-        Compute score and check gradient norms.
+        Create weights based on confidence (inverse variance).
         
         Args:
-            x: Input sample
-            t: Timestep
+            values: List of tensors
+            temperature: Temperature parameter for softmax
             
         Returns:
-            torch.Tensor: Score
+            torch.Tensor: Normalized weights
         """
-        x.requires_grad_(True)
-        score = self.forward(x, t)
+        # Compute variance for each value
+        stacked = torch.stack(values)  # (n_disorder, *shape)
+        variances = stacked.var(dim=tuple(range(1, stacked.dim())))
         
-        # Compute gradient norm
-        if score.requires_grad:
-            grad_norm = torch.autograd.grad(
-                outputs=score.sum(),
-                inputs=x,
-                create_graph=False,
-                retain_graph=True
-            )[0].norm()
-            
-            if grad_norm > self.max_norm:
-                import warnings
-                warnings.warn(f"Gradient norm {grad_norm:.4f} exceeds max {self.max_norm}")
+        # Inverse variance weighting with softmax
+        inv_var = 1.0 / (variances + 1e-8)
+        weights = torch.softmax(inv_var / temperature, dim=0)
         
-        return score
+        return weights

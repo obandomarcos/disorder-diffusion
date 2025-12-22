@@ -1,4 +1,9 @@
 """Dataset download and preparation utilities."""
+import sys
+from pathlib import Path
+
+# Add parent directory to path
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import os
 import torch
@@ -171,39 +176,27 @@ class DatasetDownloader:
             raise FileNotFoundError(f"Dataset not found at {load_path}")
         return np.load(load_path)['images']
 
-
 def download_and_prepare_benchmark(dataset_name: str = "synthetic",
                                    num_samples: int = 100,
-                                   cache_dir: str = "datasets") -> Tuple[np.ndarray, str]:
+                                   cache_dir: str = "datasets",
+                                   image_size: int = 32,
+                                   channels: int = 1) -> Tuple[np.ndarray, str]:
     """
     Download and prepare benchmark dataset.
-    
-    Args:
-        dataset_name: Name of dataset ('ffhq', 'synthetic', 'cifar10', 'imagenet_subset')
-        num_samples: Number of samples to download
-        cache_dir: Cache directory for datasets
-        
-    Returns:
-        Tuple of (dataset_array, dataset_path)
-        
-    Example:
-        >>> data, path = download_and_prepare_benchmark('synthetic', num_samples=100)
-        >>> print(data.shape)
-        (100, 1, 32, 32)
+    ...
     """
     downloader = DatasetDownloader(cache_dir=cache_dir)
     
     print(f"\nDownloading {dataset_name} dataset...")
     print(f"Number of samples: {num_samples}")
     
-    dataset = downloader.download(dataset_name, num_samples=num_samples)
+    dataset = downloader.download(dataset_name, num_samples=num_samples, 
+                                  image_size=image_size, channels=channels)
     
     print(f"Dataset shape: {dataset.shape}")
     print(f"Data type: {dataset.dtype}")
     print(f"Value range: [{dataset.min():.4f}, {dataset.max():.4f}]")
     
-    downloader.save_dataset(dataset, name=dataset_name)
-
     return dataset, cache_dir
 
 

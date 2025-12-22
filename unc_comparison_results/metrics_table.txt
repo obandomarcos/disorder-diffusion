@@ -1,0 +1,58 @@
+========================================================================================================================
+COMPREHENSIVE UQ COMPARISON: DPS vs DA-DPS on CIFAR-10
+========================================================================================================================
+
+
+COMPRESSED_SENSING
+--------------------------------------------------------------------------------
+
+RECONSTRUCTION QUALITY METRICS:
+  PSNR (dB)      | DPS:  13.6500 | DA-DPS:  13.5796 | Δ:  -0.0704
+  SSIM           | DPS:   0.0197 | DA-DPS:  -0.0015 | Δ:  -0.0212
+  MSE            | DPS:   0.0432 | DA-DPS:   0.0439 | Δ:  +0.0007
+  MAE            | DPS:   0.1730 | DA-DPS:   0.1746 | Δ:  +0.0016
+
+UNCERTAINTY QUANTIFICATION METRICS:
+  Coverage (95%) | DPS:   1.0000 | DA-DPS:   1.0000 | Δ:  +0.0000
+  ECE            | DPS:   0.4452 | DA-DPS:   0.4427 | Δ:  -0.0025
+
+DISTRIBUTION COMPARISON METRICS:
+  Wasserstein    |       0.1062
+  Energy Distance|      -0.0502
+  MMD            |     0.040000
+
+BLUR
+--------------------------------------------------------------------------------
+
+RECONSTRUCTION QUALITY METRICS:
+  PSNR (dB)      | DPS:  13.5504 | DA-DPS:  13.5317 | Δ:  -0.0187
+  SSIM           | DPS:  -0.0059 | DA-DPS:  -0.0122 | Δ:  -0.0063
+  MSE            | DPS:   0.0442 | DA-DPS:   0.0443 | Δ:  +0.0002
+  MAE            | DPS:   0.1752 | DA-DPS:   0.1754 | Δ:  +0.0002
+
+UNCERTAINTY QUANTIFICATION METRICS:
+  Coverage (95%) | DPS:   1.0000 | DA-DPS:   1.0000 | Δ:  +0.0000
+  ECE            | DPS:   0.4405 | DA-DPS:   0.4419 | Δ:  +0.0014
+
+DISTRIBUTION COMPARISON METRICS:
+  Wasserstein    |       0.1007
+  Energy Distance|      -0.0252
+  MMD            |     0.040000
+
+INPAINTING
+--------------------------------------------------------------------------------
+
+RECONSTRUCTION QUALITY METRICS:
+  PSNR (dB)      | DPS:  13.5763 | DA-DPS:  13.6208 | Δ:  +0.0445
+  SSIM           | DPS:  -0.0029 | DA-DPS:   0.0139 | Δ:  +0.0168
+  MSE            | DPS:   0.0439 | DA-DPS:   0.0434 | Δ:  -0.0004
+  MAE            | DPS:   0.1740 | DA-DPS:   0.1735 | Δ:  -0.0004
+
+UNCERTAINTY QUANTIFICATION METRICS:
+  Coverage (95%) | DPS:   1.0000 | DA-DPS:   1.0000 | Δ:  +0.0000
+  ECE            | DPS:   0.4416 | DA-DPS:   0.4437 | Δ:  +0.0021
+
+DISTRIBUTION COMPARISON METRICS:
+  Wasserstein    |       0.1075
+  Energy Distance|      -0.0359
+  MMD            |     0.040000

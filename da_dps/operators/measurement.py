@@ -1,9 +1,11 @@
 """DeepInv measurement operator wrapper."""
 
+
 import torch
 import torch.nn as nn
 import numpy as np
 from typing import Optional, Callable
+
 
 
 class LinearMeasurementOperator:
@@ -20,6 +22,7 @@ class LinearMeasurementOperator:
         self.A = A.to(device)
         self.device = device
         self.m, self.n = A.shape
+        self._input_shape = None
     
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
@@ -31,6 +34,9 @@ class LinearMeasurementOperator:
         Returns:
             torch.Tensor: Measurements
         """
+        # Cache input shape for adjoint
+        self._input_shape = x.shape
+        
         # Handle different input shapes
         if x.dim() == 4:
             batch, channels, h, w = x.shape
@@ -50,11 +56,21 @@ class LinearMeasurementOperator:
         Returns:
             torch.Tensor: Adjoint result
         """
-        return torch.matmul(y, self.A)
+        res = torch.matmul(y, self.A)
+        
+        # Reshape if we have cached a 4D shape and dims match
+        if self._input_shape is not None and len(self._input_shape) == 4:
+            b, c, h, w = self._input_shape
+            # Ensure the flattened size matches
+            if res.shape[-1] == c * h * w:
+                return res.view(res.shape[0], c, h, w)
+        
+        return res
     
     def __call__(self, x: torch.Tensor) -> torch.Tensor:
         """Forward pass."""
         return self.forward(x)
+
 
 
 class GaussianRandomMeasurementOperator(LinearMeasurementOperator):
@@ -80,6 +96,48 @@ class GaussianRandomMeasurementOperator(LinearMeasurementOperator):
         
         super().__init__(A, device)
         self.compression_ratio = n_measurements / n_pixels
+
+
+
+class SinglePixelImagingOperator(LinearMeasurementOperator):
+    """Single-pixel imaging operator using random pixel selection."""
+    
+    def __init__(self, n_pixels: int, img_size: int = 32, n_channels: int = 3,
+                 device: str = 'cpu', selection_type: str = 'random'):
+        """
+        Initialize single-pixel imaging operator.
+        
+        Args:
+            n_pixels: Number of random pixels to measure
+            img_size: Image spatial dimension (assumes square images)
+            n_channels: Number of color channels
+            device: Torch device
+            selection_type: 'random' for random pixel selection, 'sparse' for sparse pattern
+        """
+        self.img_size = img_size
+        self.n_channels = n_channels
+        self.n_total_pixels = img_size * img_size * n_channels
+        self.selection_type = selection_type
+        
+        # Create measurement matrix
+        if selection_type == 'random':
+            A = torch.zeros(n_pixels, self.n_total_pixels, device=device)
+            indices = torch.randperm(self.n_total_pixels, device=device)[:n_pixels]
+            A[torch.arange(n_pixels, device=device), indices] = 1.0
+        
+        elif selection_type == 'sparse':
+            # Sparse pattern: sample from corner regions
+            A = torch.zeros(n_pixels, self.n_total_pixels, device=device)
+            indices = torch.randperm(self.n_total_pixels, device=device)[:n_pixels]
+            A[torch.arange(n_pixels, device=device), indices] = 1.0
+        
+        else:
+            raise ValueError(f"Unknown selection type: {selection_type}")
+        
+        super().__init__(A, device)
+        self.compression_ratio = n_pixels / self.n_total_pixels
+        self.measurement_indices = indices
+
 
 
 class CompositeMeasurementOperator:
@@ -112,6 +170,7 @@ class CompositeMeasurementOperator:
         return result
 
 
+
 class DeepInvMeasurementOperator:
     """Wrapper for DeepInv measurement operators."""
     
@@ -122,9 +181,9 @@ class DeepInvMeasurementOperator:
         Initialize DeepInv measurement operator.
         
         Args:
-            operator_type: 'gaussian_cs', 'blur', 'inpainting', 'compose'
+            operator_type: 'gaussian_cs', 'single_pixel', 'blur', 'inpainting', 'compose'
             n_measurements: Number of measurements
-            n_pixels: Signal dimension
+            n_pixels: Signal dimension or image size
             device: Torch device
             **kwargs: Additional operator-specific parameters
         """
@@ -137,6 +196,18 @@ class DeepInvMeasurementOperator:
                 n_pixels=n_pixels,
                 device=device,
                 normalize=kwargs.get('normalize', True)
+            )
+        
+        elif operator_type == 'single_pixel':
+            img_size = kwargs.get('img_size', 32)
+            n_channels = kwargs.get('n_channels', 3)
+            selection_type = kwargs.get('selection_type', 'random')
+            self.operator = SinglePixelImagingOperator(
+                n_pixels=n_measurements,
+                img_size=img_size,
+                n_channels=n_channels,
+                device=device,
+                selection_type=selection_type
             )
         
         elif operator_type == 'blur':
@@ -168,6 +239,7 @@ class DeepInvMeasurementOperator:
     
     def __call__(self, x: torch.Tensor) -> torch.Tensor:
         return self.forward(x)
+
 
 
 class BlurOperator:
@@ -203,6 +275,7 @@ class BlurOperator:
     def adjoint(self, y: torch.Tensor) -> torch.Tensor:
         """Apply adjoint blur (same as forward for symmetric operator)."""
         return self.forward(y)
+
 
 
 class InpaintingOperator:
