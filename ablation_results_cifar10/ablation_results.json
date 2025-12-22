@@ -1,0 +1,226 @@
+[
+  {
+    "psnr": {
+      "mean": 3.518995150109447,
+      "std_of_means": 0.010421552953463697,
+      "mean_of_stds": 1.3282446631762272
+    },
+    "ssim": {
+      "mean": 0.004649528896593433,
+      "std_of_means": 0.0004572052260723397,
+      "mean_of_stds": 0.007048648768589094
+    },
+    "mse": {
+      "mean": 1.2064287480711937,
+      "std_of_means": 0.0028156617283821017,
+      "mean_of_stds": 0.13092464936140286
+    },
+    "measurement_fidelity": {
+      "mean": 1.065334480702877,
+      "std_of_means": 0.013753873407840733,
+      "mean_of_stds": 0.1114243244081499
+    },
+    "inference_time": {
+      "mean": 0.06054309487342835,
+      "std_of_means": 0.0007091963291168229,
+      "mean_of_stds": 0.007715818188336705
+    },
+    "ablation_mode": "baseline"
+  },
+  {
+    "psnr": {
+      "mean": 1.7841085365744527,
+      "std_of_means": 0.21099124531352575,
+      "mean_of_stds": 5.835676549615474
+    },
+    "ssim": {
+      "mean": 0.004659852217303588,
+      "std_of_means": 0.0004110828643515167,
+      "mean_of_stds": 0.007245441413749408
+    },
+    "mse": {
+      "mean": 4.355403678454459,
+      "std_of_means": 0.5724267286434772,
+      "mean_of_stds": 7.773473109468073
+    },
+    "measurement_fidelity": {
+      "mean": 4.1826767768710855,
+      "std_of_means": 0.6037354807555675,
+      "mean_of_stds": 7.711481038680039
+    },
+    "inference_time": {
+      "mean": 0.05974119424819946,
+      "std_of_means": 4.050731658936796e-06,
+      "mean_of_stds": 0.0005220916030184783
+    },
+    "ablation_mode": "disorder_strength"
+  },
+  {
+    "psnr": {
+      "mean": 3.518995150109447,
+      "std_of_means": 0.010421552953463697,
+      "mean_of_stds": 1.3282446631762272
+    },
+    "ssim": {
+      "mean": 0.004649528896593433,
+      "std_of_means": 0.0004572052260723397,
+      "mean_of_stds": 0.007048648768589094
+    },
+    "mse": {
+      "mean": 1.2064287480711937,
+      "std_of_means": 0.0028156617283821017,
+      "mean_of_stds": 0.13092464936140286
+    },
+    "measurement_fidelity": {
+      "mean": 1.065334480702877,
+      "std_of_means": 0.013753873407840733,
+      "mean_of_stds": 0.1114243244081499
+    },
+    "inference_time": {
+      "mean": 0.05955982327461243,
+      "std_of_means": 4.74822521209714e-05,
+      "mean_of_stds": 0.00047158814251133194
+    },
+    "ablation_mode": "noise_schedule"
+  },
+  {
+    "psnr": {
+      "mean": 3.518995150109447,
+      "std_of_means": 0.010421552953463697,
+      "mean_of_stds": 1.3282446631762272
+    },
+    "ssim": {
+      "mean": 0.004649528896593433,
+      "std_of_means": 0.0004572052260723397,
+      "mean_of_stds": 0.007048648768589094
+    },
+    "mse": {
+      "mean": 1.2064287480711937,
+      "std_of_means": 0.0028156617283821017,
+      "mean_of_stds": 0.13092464936140286
+    },
+    "measurement_fidelity": {
+      "mean": 1.065334480702877,
+      "std_of_means": 0.013753873407840733,
+      "mean_of_stds": 0.1114243244081499
+    },
+    "inference_time": {
+      "mean": 0.05966475367546081,
+      "std_of_means": 1.3827085494994007e-05,
+      "mean_of_stds": 0.0006885579860969496
+    },
+    "ablation_mode": "regularization"
+  },
+  {
+    "psnr": {
+      "mean": 1.7841085365744527,
+      "std_of_means": 0.21099124531352575,
+      "mean_of_stds": 5.835676549615474
+    },
+    "ssim": {
+      "mean": 0.004659852217303588,
+      "std_of_means": 0.0004110828643515167,
+      "mean_of_stds": 0.007245441413749408
+    },
+    "mse": {
+      "mean": 4.355403678454459,
+      "std_of_means": 0.5724267286434772,
+      "mean_of_stds": 7.773473109468073
+    },
+    "measurement_fidelity": {
+      "mean": 4.1826767768710855,
+      "std_of_means": 0.6037354807555675,
+      "mean_of_stds": 7.711481038680039
+    },
+    "inference_time": {
+      "mean": 0.05994266986846924,
+      "std_of_means": 0.0001705694198608429,
+      "mean_of_stds": 0.0018500142864679354
+    },
+    "ablation_mode": "strength_schedule"
+  },
+  {
+    "psnr": {
+      "mean": 1.7841085365744527,
+      "std_of_means": 0.21099124531352575,
+      "mean_of_stds": 5.835676549615474
+    },
+    "ssim": {
+      "mean": 0.004659852217303588,
+      "std_of_means": 0.0004110828643515167,
+      "mean_of_stds": 0.007245441413749408
+    },
+    "mse": {
+      "mean": 4.355403678454459,
+      "std_of_means": 0.5724267286434772,
+      "mean_of_stds": 7.773473109468073
+    },
+    "measurement_fidelity": {
+      "mean": 4.1826767768710855,
+      "std_of_means": 0.6037354807555675,
+      "mean_of_stds": 7.711481038680039
+    },
+    "inference_time": {
+      "mean": 0.05972282528877258,
+      "std_of_means": 7.341027259826632e-05,
+      "mean_of_stds": 0.0006358515895596404
+    },
+    "ablation_mode": "strength_reg"
+  },
+  {
+    "psnr": {
+      "mean": 3.518995150109447,
+      "std_of_means": 0.010421552953463697,
+      "mean_of_stds": 1.3282446631762272
+    },
+    "ssim": {
+      "mean": 0.004649528896593433,
+      "std_of_means": 0.0004572052260723397,
+      "mean_of_stds": 0.007048648768589094
+    },
+    "mse": {
+      "mean": 1.2064287480711937,
+      "std_of_means": 0.0028156617283821017,
+      "mean_of_stds": 0.13092464936140286
+    },
+    "measurement_fidelity": {
+      "mean": 1.065334480702877,
+      "std_of_means": 0.013753873407840733,
+      "mean_of_stds": 0.1114243244081499
+    },
+    "inference_time": {
+      "mean": 0.05958581447601319,
+      "std_of_means": 3.808259963989161e-05,
+      "mean_of_stds": 0.0005310355923706846
+    },
+    "ablation_mode": "schedule_reg"
+  },
+  {
+    "psnr": {
+      "mean": 1.7841085365744527,
+      "std_of_means": 0.21099124531352575,
+      "mean_of_stds": 5.835676549615474
+    },
+    "ssim": {
+      "mean": 0.004659852217303588,
+      "std_of_means": 0.0004110828643515167,
+      "mean_of_stds": 0.007245441413749408
+    },
+    "mse": {
+      "mean": 4.355403678454459,
+      "std_of_means": 0.5724267286434772,
+      "mean_of_stds": 7.773473109468073
+    },
+    "measurement_fidelity": {
+      "mean": 4.1826767768710855,
+      "std_of_means": 0.6037354807555675,
+      "mean_of_stds": 7.711481038680039
+    },
+    "inference_time": {
+      "mean": 0.06003199219703674,
+      "std_of_means": 1.4709234237669094e-05,
+      "mean_of_stds": 0.0033087784811580956
+    },
+    "ablation_mode": "full"
+  }
+]

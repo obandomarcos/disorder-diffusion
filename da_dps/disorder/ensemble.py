@@ -5,7 +5,6 @@ import numpy as np
 from typing import Optional, Dict, List, Iterator
 import warnings
 
-
 class DisorderEnsemble:
     """Manages disorder ensemble for DA-DPS."""
     
