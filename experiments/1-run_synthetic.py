@@ -10,6 +10,10 @@ from tqdm import tqdm
 from scipy.stats import wasserstein_distance, norm
 from torchvision import datasets, transforms
 from diffusers.schedulers import DDPMScheduler
+import os
+import tarfile
+from pathlib import Path
+import urllib.request
 
 
 @dataclass
@@ -426,71 +430,127 @@ def save_metrics_table(all_results, output_dir):
     print(f"✓ Metrics saved to {output_dir / 'metrics_table.txt'}")
 
 
+def download_and_prepare_ffhq(root: str):
+    """
+    Download and extract FFHQ if not already present.
+    Expects NVLabs .tar file and arranges images into a single ImageFolder class.
+    """
+    root = Path(root)
+    images_dir = root / "images"
+    if images_dir.exists() and any(images_dir.glob("*.png")):
+        print(f"FFHQ already prepared at {images_dir}")
+        return images_dir
+
+    root.mkdir(parents=True, exist_ok=True)
+    tar_path = root / "ffhq.tar"
+
+    if not tar_path.exists():
+        # URL is an example; point to your actual FFHQ tarball location
+        url = "https://archive.org/download/ffhq-dataset/thumbnails128x128.tar"  # replace with your desired res
+        print(f"Downloading FFHQ from {url} to {tar_path} ...")
+        urllib.request.urlretrieve(url, tar_path)  # [web:1][web:9]
+        print("Download complete.")
+
+    print("Extracting FFHQ tar...")
+    with tarfile.open(tar_path, "r") as tar:
+        tar.extractall(path=root)  # [web:1]
+
+    # Assume extraction produced a flat directory of images; move into images_dir
+    images_dir.mkdir(exist_ok=True)
+    for p in root.glob("**/*.png"):
+        if p.parent == images_dir:
+            continue
+        target = images_dir / p.name
+        if not target.exists():
+            p.rename(target)
+
+    print(f"FFHQ images prepared at {images_dir}")
+    return images_dir
+
+
 def main():
-    """Main experiment runner for DA-DPS vs DPS comparison"""
     import argparse
-    
-    parser = argparse.ArgumentParser(description='DA-DPS vs DPS UQ Comparison on CIFAR-10')
-    parser.add_argument('--device', type=str, default='cuda' if torch.cuda.is_available() else 'cpu',
-                       help='Device to run on')
-    parser.add_argument('--n-samples', type=int, default=100,
-                       help='Number of posterior samples to draw')
-    parser.add_argument('--num-steps', type=int, default=100,
-                       help='Number of diffusion steps')
-    parser.add_argument('--n-disorder-samples', type=int, default=50,
-                       help='Number of disorder samples in DA-DPS')
-    parser.add_argument('--output-dir', type=str, default='./unc_comparison_results',
-                       help='Output directory for results')
-    parser.add_argument('--seed', type=int, default=42,
-                       help='Random seed')
+
+    parser = argparse.ArgumentParser(description='DA-DPS vs DPS UQ Comparison')
+    parser.add_argument(
+        '--device', type=str,
+        default='cuda' if torch.cuda.is_available() else 'cpu'
+    )
+    parser.add_argument(
+        '--dataset', type=str, default='cifar10',
+        choices=['cifar10', 'ffhq'],
+        help='Dataset to use: cifar10 or ffhq'
+    )
+    parser.add_argument(
+        '--ffhq-root', type=str, default='data/ffhq',
+        help='Root directory to store FFHQ (tar + extracted images)'
+    )
+    parser.add_argument('--n-samples', type=int, default=100)
+    parser.add_argument('--num-steps', type=int, default=100)
+    parser.add_argument('--n-disorder-samples', type=int, default=50)
+    parser.add_argument('--output-dir', type=str, default='./unc_comparison_results')
+    parser.add_argument('--seed', type=int, default=42)
     args = parser.parse_args()
-    
-    # Setup
+
     torch.manual_seed(args.seed)
     np.random.seed(args.seed)
     device = torch.device(args.device)
     output_dir = Path(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
-    
+
     print(f"\n{'='*80}")
-    print("DA-DPS vs DPS: Comprehensive UQ Comparison on CIFAR-10")
+    print(f"DA-DPS vs DPS: Comprehensive UQ Comparison on {args.dataset.upper()}")
     print(f"{'='*80}")
-    print(f"Device: {device}")
-    print(f"Posterior samples: {args.n_samples}")
-    print(f"Diffusion steps: {args.num_steps}")
-    print(f"Disorder samples (DA-DPS): {args.n_disorder_samples}")
-    print(f"Output directory: {output_dir}")
-    
-    # Initialize models
-    print(f"\n{'─'*80}")
-    print("Initializing models...")
-    print(f"{'─'*80}")
-    
+
     score_network = ScoreNetwork(in_channels=3, hidden_dim=128, n_layers=4).to(device)
     scheduler = DDPMScheduler(num_train_timesteps=1000)
-    
-    # Load a test image from CIFAR-10
+
+    # Transform: NO resize, only ToTensor + Normalize
     transform = transforms.Compose([
         transforms.ToTensor(),
-        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+        transforms.Normalize((0.5, 0.5, 0.5),
+                             (0.5, 0.5, 0.5))
     ])
-    
-    print("Loading CIFAR-10 test image...")
-    cifar_dataset = datasets.CIFAR10(root='/tmp/cifar10', train=False, download=True, transform=transform)
-    x_true, _ = cifar_dataset[0]
-    x_true = x_true.unsqueeze(0).to(device)  # (1, 3, 32, 32)
-    print(f"✓ Loaded image with shape {x_true.shape}")
-    
-    # Initialize operators
-    print(f"\n{'─'*80}")
-    print("Initializing inverse problem operators...")
-    print(f"{'─'*80}")
-    
+
+    print("Loading test image...")
+    if args.dataset == 'cifar10':
+        cifar_dataset = datasets.CIFAR10(
+            root='/tmp/cifar10',
+            train=False,
+            download=True,
+            transform=transform
+        )
+        x_true, _ = cifar_dataset[0]
+    else:  # ffhq
+        ffhq_images_dir = download_and_prepare_ffhq(args.ffhq_root)
+        # Put all images in a single dummy class for ImageFolder
+        dummy_root = Path(args.ffhq_root) / "imagefolder_ffhq"
+        class_dir = dummy_root / "faces"
+        if not class_dir.exists():
+            class_dir.mkdir(parents=True, exist_ok=True)
+            for img_path in ffhq_images_dir.glob("*.png"):
+                target = class_dir / img_path.name
+                if not target.exists():
+                    img_path.link_to(target) if hasattr(img_path, "link_to") else img_path.rename(target)
+
+        ffhq_dataset = datasets.ImageFolder(
+            root=str(dummy_root),
+            transform=transform
+        )
+        x_true, _ = ffhq_dataset[0]
+
+    x_true = x_true.unsqueeze(0).to(device)
+    print(f"✓ Loaded image from {args.dataset.upper()} with shape {x_true.shape}")
+
+    # You must ensure operators use x_true.shape[-2:] instead of hard-coded 32
+    H, W = x_true.shape[-2:]
     operators = {
-        'compressed_sensing': CompressedSensingOperator(img_size=32, n_channels=3, 
-                                                       compression_ratio=0.25, device=device),
+        'compressed_sensing': CompressedSensingOperator(
+            img_size=H, n_channels=3,
+            compression_ratio=0.25, device=device
+        ),
         'blur': BlurOperator(kernel_size=5, sigma=1.5, device=device),
-        'inpainting': InpaintingOperator(mask_ratio=0.5, img_size=32, device=device),
+        'inpainting': InpaintingOperator(mask_ratio=0.5, img_size=H, device=device),
     }
     
     for op_name in operators.keys():
